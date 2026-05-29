@@ -1,0 +1,8 @@
+backend/data/database.sqlite
+backend/data/matches.csv
+
+venv/
+__pycache__/
+node_modules/
+.next/
+.env
