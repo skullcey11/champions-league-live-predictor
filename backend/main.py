@@ -18,6 +18,14 @@ app.add_middleware(
 MATCH_ID = "401862897"
 
 
+@app.get("/")
+def health_check():
+    return {
+        "status": "ok",
+        "service": "champions-league-live-predictor-backend"
+    }
+
+
 class MatchInput(BaseModel):
     minute: int
 
@@ -45,7 +53,8 @@ def fetch_match_data():
         url,
         headers={
             "User-Agent": "Mozilla/5.0"
-        }
+        },
+        timeout=8
     )
 
     return response.json()
@@ -209,10 +218,7 @@ def live_match():
                 )
             )
 
-            if (
-                "Paris Saint-Germain"
-                in name
-            ):
+            if "Paris Saint-Germain" in name:
                 psg_goals = score
 
             elif "Arsenal" in name:
@@ -256,9 +262,7 @@ def live_match():
                 if "-" not in values:
                     continue
 
-                split = values.split(
-                    "-"
-                )
+                split = values.split("-")
 
                 if len(split) != 2:
                     continue
@@ -380,6 +384,9 @@ def get_motm():
 
                     elif stat_type == "shotsTotal":
                         player_scores[name] += value * 2
+
+    if not player_scores:
+        return []
 
     sorted_players = sorted(
         player_scores.items(),

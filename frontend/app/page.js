@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+const API_BASE =
+  "https://champions-league-live-predictor-backend.onrender.com";
+
 export default function Home() {
   const [mode, setMode] = useState("live");
   const [prediction, setPrediction] = useState(null);
@@ -16,16 +19,12 @@ export default function Home() {
   const [form, setForm] = useState({
     minute: 0,
     added_time: 0,
-
     psg_goals: 0,
     arsenal_goals: 0,
-
     psg_shots: 0,
     arsenal_shots: 0,
-
     psg_corners: 0,
     arsenal_corners: 0,
-
     psg_possession: 50,
     arsenal_possession: 50,
   });
@@ -33,10 +32,7 @@ export default function Home() {
   const isLiveMode = mode === "live";
 
   const totalMatchMinute = useMemo(() => {
-    return (
-      Number(form.minute) +
-      Number(form.added_time)
-    );
+    return Number(form.minute) + Number(form.added_time);
   }, [form]);
 
   useEffect(() => {
@@ -56,7 +52,7 @@ export default function Home() {
   const fetchRecentForm = async () => {
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/recent-form"
+        `${API_BASE}/recent-form`
       );
       const data = await res.json();
       setRecentForm(data);
@@ -68,7 +64,7 @@ export default function Home() {
   const fetchMOTM = async () => {
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/motm"
+        `${API_BASE}/motm`
       );
 
       const data = await res.json();
@@ -81,69 +77,61 @@ export default function Home() {
   const runPrediction = async (
     payloadOverride = null
   ) => {
-    const payload =
-      payloadOverride || {
-        ...form,
-        minute: totalMatchMinute,
-      };
+    try {
+      const payload =
+        payloadOverride || {
+          ...form,
+          minute: totalMatchMinute,
+        };
 
-    const res = await fetch(
-      "http://127.0.0.1:8000/predict",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify(payload),
-      }
-    );
+      const res = await fetch(
+        `${API_BASE}/predict`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    const data = await res.json();
-    setPrediction(data);
+      const data = await res.json();
+      setPrediction(data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const fetchLiveMatch = async () => {
     try {
       const res = await fetch(
-        "http://127.0.0.1:8000/live-match"
+        `${API_BASE}/live-match`
       );
 
       const data = await res.json();
 
-      setLiveStatus(
-        data.status || ""
-      );
+      setLiveStatus(data.status || "");
 
       const updatedForm = {
         ...form,
-        minute:
-          data.minute ?? 0,
+        minute: data.minute ?? 0,
         added_time:
           data.added_time ?? 0,
-
         psg_goals:
           data.psg_goals ?? 0,
-
         arsenal_goals:
           data.arsenal_goals ?? 0,
-
         psg_shots:
           data.psg_shots ?? 0,
-
         arsenal_shots:
           data.arsenal_shots ?? 0,
-
         psg_corners:
           data.psg_corners ?? 0,
-
         arsenal_corners:
           data.arsenal_corners ?? 0,
-
         psg_possession:
-          data.psg_possession ??
-          50,
-
+          data.psg_possession ?? 50,
         arsenal_possession:
           data.arsenal_possession ??
           50,
@@ -202,15 +190,12 @@ export default function Home() {
   ) => {
     if (isLiveMode) return;
 
-    const psg =
-      Number(value);
+    const psg = Number(value);
 
     setForm((prev) => ({
       ...prev,
-      psg_possession:
-        psg,
-      arsenal_possession:
-        100 - psg,
+      psg_possession: psg,
+      arsenal_possession: 100 - psg,
     }));
   };
 
@@ -267,28 +252,28 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
+    <main className="min-h-screen bg-black text-white px-4 md:px-8 py-8">
       <div className="max-w-6xl mx-auto">
 
-        <div className="flex justify-center items-center gap-8 mb-8">
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8 mb-8 text-center">
           <img
             src="https://a.espncdn.com/i/teamlogos/soccer/500/160.png"
-            className="w-16 h-16"
+            className="w-14 h-14 md:w-16 md:h-16"
             alt="PSG"
           />
 
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-2xl md:text-4xl font-bold">
             PSG vs Arsenal Live Predictor
           </h1>
 
           <img
             src="https://a.espncdn.com/i/teamlogos/soccer/500/359.png"
-            className="w-16 h-16"
+            className="w-14 h-14 md:w-16 md:h-16"
             alt="Arsenal"
           />
         </div>
 
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-center gap-4 mb-8">
           <button
             onClick={() =>
               setMode("live")
@@ -318,7 +303,7 @@ export default function Home() {
 
         {liveStatus && (
           <div className="text-center mb-8">
-            <span className="bg-zinc-800 px-5 py-2 rounded-full text-lg font-semibold">
+            <span className="bg-zinc-800 px-5 py-2 rounded-full text-sm md:text-lg font-semibold">
               {liveStatus}
             </span>
           </div>
@@ -330,7 +315,7 @@ export default function Home() {
               PSG Last 5
             </h3>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {recentForm.psg.map(
                 (result, i) => (
                   <div
@@ -349,7 +334,7 @@ export default function Home() {
               Arsenal Last 5
             </h3>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {recentForm.arsenal.map(
                 (result, i) => (
                   <div
@@ -371,19 +356,8 @@ export default function Home() {
               Match Info
             </h2>
 
-            <Counter
-              label="Minute"
-              field="minute"
-              value={form.minute}
-              max={120}
-            />
-
-            <Counter
-              label="Added Time"
-              field="added_time"
-              value={form.added_time}
-              max={15}
-            />
+            <Counter label="Minute" field="minute" value={form.minute} max={120} />
+            <Counter label="Added Time" field="added_time" value={form.added_time} max={15} />
           </div>
 
           <div className="bg-zinc-900 rounded-xl p-6">
@@ -409,8 +383,7 @@ export default function Home() {
 
         <div className="mt-8">
           <label>
-            PSG Possession:
-            {form.psg_possession}%
+            PSG Possession: {form.psg_possession}%
           </label>
 
           <input
@@ -420,19 +393,14 @@ export default function Home() {
             disabled={isLiveMode}
             value={form.psg_possession}
             onChange={(e) =>
-              updatePossession(
-                e.target.value
-              )
+              updatePossession(e.target.value)
             }
             className="w-full mt-2"
           />
 
           <div className="mt-2">
             Arsenal:
-            {
-              form.arsenal_possession
-            }
-            %
+            {form.arsenal_possession}%
           </div>
         </div>
 
@@ -489,11 +457,7 @@ export default function Home() {
                   player,
                   index
                 ) => (
-                  <div
-                    key={
-                      player.name
-                    }
-                  >
+                  <div key={player.name}>
                     <div className="flex justify-between mb-2">
                       <span>
                         #{index + 1} {player.name}
@@ -518,6 +482,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
       </div>
     </main>
   );
